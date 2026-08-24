@@ -1,96 +1,148 @@
-\# Projektbeschreibung
+# Projektbeschreibung
 
+## Ausgangslage
 
-
-\## Ausgangslage
-
-
-
-Im Rahmen der Modulararbeit wird ein Data-Warehouse-System
-
-konzipiert und praktisch implementiert.
-
-
+Im Rahmen der Modulararbeit wird ein Data-Warehouse-System konzipiert und praktisch implementiert.
 
 Als operative Quelldatenbank wird die Sakila-Datenbank eingesetzt.
 
+Die benötigte Infrastruktur wird mit Vagrant aufgebaut und besteht aus mehreren virtuellen Linux-Systemen.
 
+## Ziel
 
-\## Ziel
+Ziel der Arbeit ist der Aufbau eines reproduzierbaren Data-Warehouse-Systems.
 
+Die operative Sakila-Datenbank wird auf einem separaten OLTP-Datenbankserver betrieben.
 
+Die relevanten Daten werden über einen ETL-Prozess aus der operativen Datenbank extrahiert, transformiert und in ein separates Data Warehouse übertragen.
 
-Die operative Sakila-Datenbank wird auf einem separaten
+Das Data Warehouse wird für analytische Abfragen optimiert und verwendet ein dimensionales Datenmodell in Form eines Sternschemas.
 
-OLTP-Datenbankserver betrieben.
+Auf Basis der Daten im Data Warehouse werden anschliessend OLAP-Abfragen durchgeführt.
 
+## Technische Hauptkomponenten
 
+Für die Umsetzung werden folgende Technologien und Konzepte eingesetzt:
 
-Die relevanten Daten werden über einen ETL-Prozess in ein separates
+- Vagrant
+- VirtualBox
+- Debian 12
+- PostgreSQL
+- Sakila
+- Python
+- SQL
+- Git
+- GitHub
+- ETL
+- Data Warehouse
+- Sternschema
+- OLAP
 
-Data Warehouse übertragen.
+## Systemarchitektur
 
+Für das Projekt werden drei virtuelle Linux-Systeme eingesetzt.
 
+| System | Hostname | IP-Adresse | Aufgabe |
+|---|---|---|---|
+| OLTP-Server | `db-oltp01` | `192.168.56.11` | Operative Sakila-Datenbank |
+| ETL-Server | `etl01` | `192.168.56.13` | ETL-Verarbeitung |
+| Data-Warehouse-Server | `db-dwh01` | `192.168.56.12` | Analytische Datenbank |
 
-Das Data Warehouse wird für analytische Abfragen optimiert und
+## OLTP-Server
 
-verwendet ein dimensionales Datenmodell.
+Der Server `db-oltp01` stellt die operative Datenbank für das Projekt bereit.
 
+Auf diesem System wird PostgreSQL als relationales Datenbanksystem eingesetzt.
 
+Die Sakila-Datenbank wird in PostgreSQL importiert und dient als operative Datenquelle für den späteren ETL-Prozess.
 
-\## Technische Hauptkomponenten
+Der Server verwendet die IP-Adresse `192.168.56.11`.
 
+## ETL-Server
 
+Der Server `etl01` wird für den ETL-Prozess eingesetzt.
 
-\- Vagrant
+ETL steht für Extract, Transform und Load.
 
-\- Linux
+Der Server übernimmt folgende Aufgaben:
 
-\- PostgreSQL
+- Extraktion der benötigten Daten aus der Sakila-Datenbank
+- Transformation der Daten für das dimensionale Datenmodell
+- Laden der transformierten Daten in das Data Warehouse
 
-\- Sakila
+Der Server verwendet die IP-Adresse `192.168.56.13`.
 
-\- Python
+## Data-Warehouse-Server
 
-\- SQL
+Der Server `db-dwh01` stellt das Data Warehouse bereit.
 
-\- Git
+Das Data Warehouse wird ebenfalls mit PostgreSQL umgesetzt.
 
-\- ETL
+Im Gegensatz zur operativen Sakila-Datenbank wird das Datenmodell für analytische Abfragen optimiert.
 
-\- Data Warehouse
+Dafür wird ein dimensionales Datenmodell in Form eines Sternschemas entwickelt.
 
-\- Sternschema
+Der Server verwendet die IP-Adresse `192.168.56.12`.
 
-\- OLAP
+## Datenfluss
 
+Der geplante Datenfluss des Systems sieht folgendermassen aus:
 
+```text
+Sakila OLTP
+db-oltp01
+     |
+     | Extract
+     v
+ETL-Prozess
+etl01
+     |
+     | Transform
+     | Load
+     v
+Data Warehouse
+db-dwh01
+     |
+     v
+OLAP-Abfragen
+```
 
-\## Systeme
+Die operative Datenhaltung und die analytische Datenhaltung werden dadurch voneinander getrennt.
 
+## Reproduzierbarkeit
 
+Ein wichtiges Ziel der Arbeit ist die Reproduzierbarkeit der gesamten Infrastruktur.
 
-\### db-oltp01
+Die virtuellen Maschinen werden nicht direkt im Git-Repository gespeichert.
 
+Stattdessen werden die notwendigen Definitionen und Konfigurationen versioniert.
 
+Dazu gehören unter anderem:
 
-Operatives PostgreSQL-Datenbanksystem mit der Sakila-Datenbank.
+- Vagrantfile
+- Provisioning-Skripte
+- SQL-Skripte
+- ETL-Quellcode
+- Konfigurationsdateien
+- Tests
+- Dokumentation
 
+Dadurch soll es möglich sein, die benötigten virtuellen Maschinen aus dem Git-Repository neu zu erstellen.
 
+Der geplante Ablauf ist:
 
-\### etl01
+```bash
+git clone https://github.com/t-rasiah/sakila-data-warehouse.git
+cd sakila-data-warehouse
+vagrant up
+```
 
+Vagrant erstellt anschliessend die definierten virtuellen Maschinen und führt die hinterlegten Provisioning-Schritte aus.
 
+## Ergebnis
 
-Separates Linux-System für den ETL-Prozess.
+Nach Abschluss der Modulararbeit soll ein funktionierendes und reproduzierbares Data-Warehouse-System vorhanden sein.
 
+Die Sakila-Datenbank dient dabei als operatives OLTP-System. Die relevanten Daten werden über einen eigenen ETL-Prozess in ein separates Data Warehouse übertragen.
 
-
-\### db-dwh01
-
-
-
-PostgreSQL-Datenbanksystem für das analytische Data Warehouse.
-
-
-
+Das Data Warehouse wird anschliessend mit OLAP-Abfragen für analytische Auswertungen verwendet.
