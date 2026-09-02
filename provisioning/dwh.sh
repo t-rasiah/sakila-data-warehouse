@@ -51,4 +51,35 @@ echo "=== Datenbank prüfen ==="
 
 sudo -u postgres psql -c "\l"
 
+echo "=== Data-Warehouse-Schema prüfen ==="
+
+DWH_SCHEMA_EXISTS=$(sudo -u postgres psql \
+  -d sakila_dwh \
+  -tAc "SELECT to_regclass('public.fact_rental') IS NOT NULL;")
+
+if [ "$DWH_SCHEMA_EXISTS" != "t" ]; then
+
+    echo "=== Data-Warehouse-Schema erstellen ==="
+
+    sudo -u postgres psql \
+      -v ON_ERROR_STOP=1 \
+      -d sakila_dwh \
+      -f /vagrant/sql/dwh/01_star_schema.sql
+
+    echo "=== Eigentümer der DWH-Tabellen setzen ==="
+
+    sudo -u postgres psql -d sakila_dwh <<'SQL'
+ALTER TABLE dim_date OWNER TO dwh_app;
+ALTER TABLE dim_customer OWNER TO dwh_app;
+ALTER TABLE dim_film OWNER TO dwh_app;
+ALTER TABLE dim_store OWNER TO dwh_app;
+ALTER TABLE fact_rental OWNER TO dwh_app;
+SQL
+
+else
+
+    echo "Data-Warehouse-Schema ist bereits vorhanden."
+
+fi
+
 echo "=== DWH Provisioning abgeschlossen ==="
