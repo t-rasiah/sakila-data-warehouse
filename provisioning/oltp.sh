@@ -51,4 +51,42 @@ echo "=== Datenbank prüfen ==="
 
 sudo -u postgres psql -c "\l"
 
+echo "=== Sakila-Datenbank prüfen ==="
+
+SAKILA_EXISTS=$(sudo -u postgres psql \
+  -d sakila_oltp \
+  -tAc "SELECT to_regclass('public.actor') IS NOT NULL;")
+
+if [ "$SAKILA_EXISTS" != "t" ]; then
+
+    echo "=== Sakila-Schema importieren ==="
+
+    sudo -u postgres psql \
+      -v ON_ERROR_STOP=1 \
+      -d sakila_oltp \
+      -f /vagrant/sql/oltp/postgres-sakila-schema.sql
+
+    echo "=== Sakila-Daten importieren ==="
+
+    sudo -u postgres psql \
+      -v ON_ERROR_STOP=1 \
+      -d sakila_oltp \
+      -f /vagrant/sql/oltp/postgres-sakila-insert-data.sql
+
+else
+
+    echo "Sakila ist bereits vorhanden. Import wird übersprungen."
+
+fi
+
+echo "=== Leserechte für sakila_app setzen ==="
+
+sudo -u postgres psql -d sakila_oltp <<'SQL'
+GRANT USAGE ON SCHEMA public TO sakila_app;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO sakila_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON TABLES TO sakila_app;
+SQL
+
 echo "=== OLTP Provisioning abgeschlossen ==="
