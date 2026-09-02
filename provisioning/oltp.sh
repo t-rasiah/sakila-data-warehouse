@@ -89,4 +89,20 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT ON TABLES TO sakila_app;
 SQL
 
+
+echo "=== PostgreSQL Netzwerkzugriff konfigurieren ==="
+
+PG_VERSION=$(pg_lsclusters --no-header | awk '{print $1}' | head -n 1)
+PG_CONF="/etc/postgresql/${PG_VERSION}/main/postgresql.conf"
+PG_HBA="/etc/postgresql/${PG_VERSION}/main/pg_hba.conf"
+
+sed -i "s/^#listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF"
+sed -i "s/^listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF"
+
+if ! grep -q "192.168.56.13/32.*sakila_app" "$PG_HBA"; then
+    echo "host    sakila_oltp    sakila_app    192.168.56.13/32    scram-sha-256" >> "$PG_HBA"
+fi
+
+systemctl restart postgresql
+
 echo "=== OLTP Provisioning abgeschlossen ==="

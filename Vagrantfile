@@ -32,7 +32,22 @@ Vagrant.configure("2") do |config|
 
     dwh.vm.provision "shell",
       path: "provisioning/dwh.sh"
-      
+  end
+
+  config.vm.define "etl" do |etl|
+    etl.vm.hostname = "etl01"
+
+    etl.vm.network "private_network",
+      ip: "192.168.56.13"
+
+    etl.vm.provider "virtualbox" do |vb|
+      vb.name = "sakila-etl01"
+      vb.memory = 2048
+      vb.cpus = 2
+    end
+
+    etl.vm.provision "shell",
+      path: "provisioning/etl.sh"
   end
 
 end
