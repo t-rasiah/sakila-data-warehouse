@@ -38,8 +38,7 @@ CREATE TABLE dim_store (
 
 CREATE TABLE fact_rental (
     rental_key BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-
-    rental_id INTEGER NOT NULL,
+    rental_id INTEGER NOT NULL UNIQUE,
 
     date_key INTEGER NOT NULL,
     customer_key INTEGER NOT NULL,
