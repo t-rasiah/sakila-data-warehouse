@@ -1,110 +1,145 @@
-# Sakila Data Warehouse & OLAP
+# Sakila Data Warehouse
 
-## Modulararbeit Datenbankdesign und Big Data
+Dieses Projekt implementiert ein Data Warehouse auf Basis der PostgreSQL-Version der Sakila-Beispieldatenbank.
 
-Dieses Repository enthält die praktische Umsetzung eines Data-Warehouse-Systems auf Basis der Sakila-Datenbank.
+Die operative Sakila-Datenbank dient als OLTP-Quellsystem. Ein in Python implementierter ETL-Prozess extrahiert und transformiert die relevanten Daten und lädt sie in ein separates PostgreSQL Data Warehouse mit Sternschema.
 
-## Projektziel
+Die gesamte Umgebung wird mit Vagrant und VirtualBox reproduzierbar bereitgestellt.
 
-Ziel dieses Projekts ist die Konzeption und Implementierung eines reproduzierbaren Data-Warehouse-Systems.
+![Systemarchitektur des Sakila Data Warehouse](docs/images/systemarchitektur.png)
 
-Die Infrastruktur wird mit Vagrant aufgebaut und besteht aus mehreren Linux-Systemen.
+## Architektur
 
-Das System umfasst:
+Das Projekt besteht aus drei virtuellen Maschinen:
 
-- einen OLTP-Datenbankserver
-- die Sakila-Datenbank als operative Datenquelle
-- einen separaten ETL-Server
-- einen Data-Warehouse-Datenbankserver
-- PostgreSQL als Datenbanksystem
-- einen ETL-Prozess
-- ein dimensionales Datenmodell als Sternschema
-- OLAP-Abfragen zur Analyse der Daten
-
-## Geplante Architektur
-
-| System | Hostname | IP-Adresse | Aufgabe |
+| Maschine | Hostname | IP-Adresse | Aufgabe |
 |---|---|---|---|
-| OLTP-Server | `db-oltp01` | `192.168.56.11` | PostgreSQL und Sakila |
-| ETL-Server | `etl01` | `192.168.56.13` | Extraktion, Transformation und Laden |
-| Data-Warehouse-Server | `db-dwh01` | `192.168.56.12` | PostgreSQL Data Warehouse |
+| `oltp` | `db-oltp01` | `192.168.56.11` | PostgreSQL mit Sakila-Quelldatenbank |
+| `etl` | `etl01` | `192.168.56.13` | Python-ETL-Prozess |
+| `dwh` | `db-dwh01` | `192.168.56.12` | PostgreSQL Data Warehouse |
 
-Der geplante Datenfluss sieht folgendermassen aus:
+Der Datenfluss erfolgt folgendermassen:
 
-```text
-db-oltp01
-PostgreSQL / Sakila
-     |
-     | Extract
-     v
-etl01
-Python / ETL
-     |
-     | Transform / Load
-     v
-db-dwh01
-PostgreSQL / Data Warehouse
-     |
-     v
-OLAP-Abfragen
-```
+`Sakila OLTP` → `Python ETL` → `Sakila Data Warehouse` → `OLAP-Analysen`
 
 ## Technologien
 
-Für die Umsetzung werden folgende Technologien und Konzepte eingesetzt:
-
-- Debian 12
+- PostgreSQL
+- Python
+- psycopg2
+- SQL
 - Vagrant
 - VirtualBox
-- PostgreSQL
-- Sakila
-- Python
-- SQL
-- Git und GitHub
-- ETL
-- Data Warehouse
-- Sternschema
-- OLAP
+- Debian
+- Git
 
-## Reproduzierbarkeit
+## Data Warehouse
 
-Die virtuellen Maschinen selbst werden nicht im Git-Repository gespeichert.
+Das Data Warehouse verwendet ein Sternschema mit der Faktentabelle `fact_rental` und vier Dimensionstabellen:
 
-Stattdessen werden der Vagrantfile, die Provisioning-Skripte, SQL-Skripte, Konfigurationen und der ETL-Quellcode versioniert.
+- `dim_date`
+- `dim_customer`
+- `dim_film`
+- `dim_store`
 
-Dadurch soll das vollständige System aus dem Git-Repository reproduziert werden können.
+Eine Zeile in `fact_rental` repräsentiert eine Vermietung eines Films an einen Kunden.
 
-Der geplante Aufbau erfolgt mit:
+Das Data Warehouse enthält nach erfolgreicher Ausführung des ETL-Prozesses `16'044` Vermietungen.
+
+## Projektstruktur
+
+```text
+sakila-data-warehouse/
+├── Vagrantfile
+├── README.md
+├── provisioning/
+│   ├── oltp.sh
+│   ├── dwh.sh
+│   └── etl.sh
+├── etl/
+│   └── load_dwh.py
+├── sql/
+│   ├── oltp/
+│   │   ├── postgres-sakila-schema.sql
+│   │   └── postgres-sakila-insert-data.sql
+│   ├── dwh/
+│   │   └── 01_star_schema.sql
+│   └── olap/
+│       ├── 01_analysen.sql
+│       └── 02_quality_checks.sql
+└── docs/
+    ├── dokumentation.md
+    └── images/
+```
+
+## Installation
+
+Vorausgesetzt werden Git, Vagrant und VirtualBox.
+
+Repository klonen:
 
 ```bash
 git clone https://github.com/t-rasiah/sakila-data-warehouse.git
 cd sakila-data-warehouse
+```
+
+Virtuelle Maschinen erstellen:
+
+```bash
 vagrant up
 ```
 
-## Repository-Struktur
+Status überprüfen:
 
-Die aktuelle Struktur des Projekts ist:
-
-```text
-sakila-data-warehouse/
-|
-|-- README.md
-|-- Vagrantfile
-|-- .gitignore
-|
-|-- provisioning/
-|   `-- oltp.sh
-|
-`-- docs/
-    |-- 01_projektbeschreibung.md
-    `-- 03_oltp_postgresql.md
+```bash
+vagrant status
 ```
 
-Die Struktur wird während der weiteren Implementierung um die Komponenten für das Data Warehouse, den ETL-Prozess, SQL-Abfragen und Tests erweitert.
+Nach erfolgreicher Provisionierung sollten die Maschinen `oltp`, `etl` und `dwh` den Zustand `running` aufweisen.
+
+## ETL-Prozess
+
+Mit der ETL-Maschine verbinden:
+
+```bash
+vagrant ssh etl
+```
+
+ETL-Prozess ausführen:
+
+```bash
+cd /vagrant
+/opt/sakila-etl/venv/bin/python etl/load_dwh.py
+```
+
+Nach erfolgreicher Ausführung enthält die Faktentabelle `fact_rental` `16'044` Vermietungen.
+
+## OLAP und Qualitätsprüfungen
+
+Die implementierten OLAP-Abfragen befinden sich unter:
+
+```text
+sql/olap/01_analysen.sql
+```
+
+Die Datenqualitätsprüfungen befinden sich unter:
+
+```text
+sql/olap/02_quality_checks.sql
+```
+
+Zu den implementierten Analysen gehören unter anderem zeitliche Auswertungen, Filmkategorien, Filialvergleiche, geografische Analysen sowie `ROLLUP` und `CUBE`.
 
 ## Dokumentation
 
-Die ausführliche Dokumentation der Modulararbeit befindet sich im Verzeichnis `docs`.
+Die vollständige Projektdokumentation mit Datenmodell, ETL-Prozess, OLAP-Analysen, Testergebnissen und Reproduzierbarkeit befindet sich unter:
 
-Die Dokumentation wird parallel zur praktischen Implementierung erstellt und beschreibt die einzelnen Schritte, technischen Entscheidungen, Konfigurationen und Tests.
+[Projektdokumentation](docs/dokumentation.md)
+
+## Datenquelle
+
+Als Quelldatensatz wird die PostgreSQL-Version der Sakila-Beispieldatenbank aus dem öffentlichen jOOQ-Sakila-Projekt verwendet:
+
+https://github.com/jOOQ/sakila
+
+Lizenz der Quelldaten: BSD 2-Clause License.
