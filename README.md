@@ -1,5 +1,20 @@
 # Sakila Data Warehouse
 
+Ein Data Warehouse zur Aufbereitung und Analyse der Sakila-Datenbank mit ETL-Prozess und OLAP-Auswertungen.
+
+**Autor:** Thines Rasiah
+
+**Klasse:** B-TIP-24-T-a
+
+**Modul:** Datenbankdesign und Big Data
+
+**Dozent:** Christian Locher
+
+**Schule:** TEKO Schweizerische Fachschule Bern
+
+---
+## Projektübersicht
+
 Dieses Projekt implementiert ein Data Warehouse auf Basis der PostgreSQL-Version der Sakila-Beispieldatenbank.
 
 Die operative Sakila-Datenbank dient als OLTP-Quellsystem. Ein in Python implementierter ETL-Prozess extrahiert und transformiert die relevanten Daten und lädt sie in ein separates PostgreSQL Data Warehouse mit Sternschema.
